@@ -1,10 +1,11 @@
 'use strict';
 
 const uuid = require('uuid');
+const logger = require('../common/logger');
 
 module.exports = class Message {
   constructor(options) {
-    this.id = uuid.v4();
+    this.id = options.id || uuid.v4();
     this.type = options.type;
     this.clientId = options.clientId;
     this.message = options.message;
@@ -21,10 +22,21 @@ module.exports = class Message {
     });
   }
 
+  static parse(message) {
+    let oMessage = {};
+    try {
+      oMessage = new this(JSON.parse(message));
+    } catch(e) {
+      logger.error(e);
+    }
+    return oMessage;
+  }
+
   static get types() {
     return {
       HELLO: 'HELLO',
       TEXT: 'TEXT',
+      ACK: 'ACK',
     };
   }
 };

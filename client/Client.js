@@ -35,6 +35,7 @@ module.exports = class Client {
       });
 
       this.ws.on('message', (data) => {
+        logger.silly('Client %s received a message from the receiver: %s', this.id, data);
         this.onMessageListener(data);
       });
     });

@@ -16,17 +16,20 @@ wss.on('connection', (ws) => {
   let clientId = null;
 
   ws.on('message', (message) => {
-    let oMessage;
-    try {
-      oMessage = JSON.parse(message);
-    } catch(e) {
-      logger.error(e);
-    }
+    let oMessage = Message.parse(message);
 
     if(oMessage.type === Message.types.HELLO) {
       clientId = oMessage.clientId;
       logger.silly('Client identify themselves as %s', clientId);
     }
+
+    // TODO: save message to the message que
+
+    const ackMessage = new Message({
+      id: oMessage.id,
+      type: Message.types.ACK,
+    });
+    ws.send(ackMessage.toString());
 
     logger.silly(message);
   });
