@@ -3,6 +3,7 @@
 const WebSocket = require('uws');
 
 const logger = require('../common/logger');
+const Message = require('../common/Message');
 
 module.exports = class Connection {
   constructor(url, clientId) {
@@ -28,6 +29,15 @@ module.exports = class Connection {
         this.onMessageListener(data);
       });
     });
+  }
+
+  hello() {
+    const message = new Message({
+      clientId: this.clientId,
+      type: Message.types.HELLO,
+    });
+
+    this.ws.send(message.toString());
   }
 
   send(message) {

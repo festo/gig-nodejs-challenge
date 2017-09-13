@@ -17,16 +17,12 @@ module.exports = class Client {
         new Connection(receiverUrl, this.id),
         new Connection(senderUrl, this.id),
       ])
-        .then((values) => {
-          this._receiver = values[0];
-          this._sender = values[1];
+        .then(([receiver, sender]) => {
+          this._receiver = receiver;
+          this._sender = sender;
 
-          // Let's introduce the client to teh servers
-          const message = new Message({
-            clientId: this.id,
-            type: Message.types.HELLO,
-          });
-          this._send(message);
+          this._receiver.hello();
+          this._sender.hello();
 
           resolve(this);
         })
@@ -60,7 +56,13 @@ module.exports = class Client {
   }
 
   setOnMesageListener(fn) {
-    this._sender.onMessageListener = fn;
+    this._sender.onMessageListener = (message) => {
+      message = Message.parse(message);
+
+      if (message.type === Message.types.TEXT) {
+        fn(message);
+      }
+    };
   }
 
   close() {
