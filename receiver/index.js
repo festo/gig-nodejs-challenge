@@ -2,51 +2,52 @@
 
 const WebSocketServer = require('uws').Server;
 const logger = require('../common/logger.js');
-const CHANNEL = 'challenge';
+const config = require('../common/config');
 
 const Message = require('../common/Message');
 const MessageQueue = require('../common/MessageQueue');
 
-const wss = new WebSocketServer({ port: 3000 });
-
+// Create WebSocket server
 let pServer = new Promise((resolve) => {
-  wss.on('listening', () => {
+  const wss = new WebSocketServer({
+    port: config.receiver.port
+  }).on('listening', () => {
     logger.info('The server is listening');
-    resolve();
+    resolve(wss);
   });
 });
 
+// Connect to the Message Queue
 let pMQ = new Promise((resolve, reject) => {
-  new MessageQueue().then(resolve).catch(reject);
+  new MessageQueue()
+    .then(resolve)
+    .catch(reject);
 });
 
-Promise.all([pServer, pMQ]).then((values) => {
-  const mq = values[1];
-
-  wss.on('connection', (ws) => {
+Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
+  server.on('connection', (ws) => {
     logger.silly('New client connected');
-    let clientId = null;
+    ws.clientId = null;
 
     ws.on('message', (message) => {
-      let oMessage = Message.parse(message);
+      message = Message.parse(message);
 
-      if(oMessage.type === Message.types.HELLO) {
-        clientId = oMessage.clientId;
-        logger.silly('Client identify themselves as %s', clientId);
+      if (message.type === Message.types.HELLO) {
+        ws.clientId = message.clientId;
+        logger.silly('Client identify themselves as %s', ws.clientId);
       }
 
       // Distribute TEXT messages only
-      if(oMessage.type === Message.types.TEXT) {
-        mq.publish(CHANNEL, oMessage.toString());
+      if (message.type === Message.types.TEXT) {
+        messageQueue.publish(config.channel, message.toString());
       }
 
+      // The message is processed, send back an ACK
       const ackMessage = new Message({
-        id: oMessage.id,
+        id: message.id,
         type: Message.types.ACK,
       });
       ws.send(ackMessage.toString());
-
-      logger.silly(message);
     });
   });
 });
