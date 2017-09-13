@@ -31,15 +31,6 @@ module.exports = class Connection {
     });
   }
 
-  hello() {
-    const message = new Message({
-      clientId: this.clientId,
-      type: Message.types.HELLO,
-    });
-
-    this.ws.send(message.toString());
-  }
-
   send(message) {
     this.ws.send(message);
   }

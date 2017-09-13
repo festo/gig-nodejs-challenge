@@ -13,7 +13,7 @@ Promise.all([
   .then(([client1, client2]) => {
     client1.send('Hello');
 
-    client2.setOnMesageListener((message) => {
+    client2.setOnMessageListener((message) => {
       logger.verbose('Message received: %s ', message);
     });
   })

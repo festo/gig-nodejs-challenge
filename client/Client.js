@@ -10,6 +10,10 @@ module.exports = class Client {
   constructor(receiverUrl, senderUrl) {
     this._receiver = null;
     this._sender = null;
+    this._messages = {};
+    this._onMessageListener = () => {
+    };
+
     this.id = uuid.v4();
 
     return new Promise((resolve, reject) => {
@@ -21,9 +25,25 @@ module.exports = class Client {
           this._receiver = receiver;
           this._sender = sender;
 
-          this._receiver.hello();
-          this._sender.hello();
+          // Say hello to receiver
+          const receiverHelloMessage = new Message({
+            clientId: this.id,
+            type: Message.types.HELLO,
+          });
+          this._receiver.send(receiverHelloMessage.toString());
+          this._messages[receiverHelloMessage.id] = receiverHelloMessage;
 
+          // Say hello to sender
+          const senderHelloMessage = new Message({
+            clientId: this.id,
+            type: Message.types.HELLO,
+          });
+          this._sender.send(senderHelloMessage.toString());
+          this._messages[senderHelloMessage.id] = senderHelloMessage;
+
+          // Catch messages from the servers
+          this._receiver.onMessageListener = this._messageHandler.bind(this);
+          this._sender.onMessageListener = this._messageHandler.bind(this);
           resolve(this);
         })
         .catch(reject);
@@ -52,22 +72,40 @@ module.exports = class Client {
       message: text,
     });
 
-   this._send(message);
+    this._send(message);
   }
 
-  setOnMesageListener(fn) {
-    this._sender.onMessageListener = (message) => {
-      message = Message.parse(message);
-
-      if (message.type === Message.types.TEXT) {
-        fn(message);
-      }
-    };
+  setOnMessageListener(fn) {
+    this._onMessageListener = fn;
   }
 
   close() {
     this._sender.close();
     this._receiver.close();
+  }
+
+  _messageHandler(message) {
+    message = Message.parse(message);
+
+    switch (message.type) {
+      case Message.types.TEXT:
+        if (message.clientId === this.id) {
+          let localMessage = this._messages[message.id];
+          if (localMessage) {
+            localMessage.setStatus(Message.statuses.DELIVERED);
+          }
+        } else {
+          this._onMessageListener(message);
+        }
+        break;
+
+      case Message.types.ACK:
+        let localMessage = this._messages[message.id];
+        if (localMessage) {
+          localMessage.setStatus(Message.statuses.PROCESSED);
+        }
+        break;
+    }
   }
 
 };

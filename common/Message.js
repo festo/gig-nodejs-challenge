@@ -10,6 +10,7 @@ module.exports = class Message {
     this.clientId = options.clientId;
     this.message = options.message;
     this.createdAt = Date.now();
+    this.status = 'CREATED';
   }
 
   toString()  {
@@ -20,6 +21,10 @@ module.exports = class Message {
       message: this.message,
       createdAt: this.createdAt,
     });
+  }
+
+  setStatus(status) {
+    this.status = status;
   }
 
   static parse(message) {
@@ -37,6 +42,14 @@ module.exports = class Message {
       HELLO: 'HELLO',
       TEXT: 'TEXT',
       ACK: 'ACK',
+    };
+  }
+
+  static get statuses() {
+    return {
+      CREATED: 'CREATED',
+      PROCESSED: 'PROCESSED',
+      DELIVERED: 'DELIVERED',
     };
   }
 };
