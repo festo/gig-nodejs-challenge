@@ -7,6 +7,9 @@ module.exports = {
   receiver: {
     url: 'ws://localhost:3000',
   },
+  sender: {
+    url: 'ws://localhost:3001',
+  },
   messageQueue: {
     url: 'redis://localhost:6379'
   },

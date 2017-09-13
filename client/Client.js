@@ -1,53 +1,46 @@
 'use strict';
 
-const WebSocket = require('uws');
 const uuid = require('uuid');
 const logger = require('../common/logger');
 
 const Message = require('../common/Message');
+const Connection = require('./Connection');
 
 module.exports = class Client {
-  constructor(url) {
-    this.isConnected = false;
+  constructor(receiverUrl, senderUrl) {
+    this._receiver = null;
+    this._sender = null;
     this.id = uuid.v4();
-    this.onMessageListener = function() {};
-    this.ws = new WebSocket(url);
 
     return new Promise((resolve, reject) => {
-      this.ws.on('open', () => {
-        this.isConnected = true;
-        logger.silly('Client %s connected to the server', this.id);
+      Promise.all([
+        new Connection(receiverUrl, this.id),
+        new Connection(senderUrl, this.id),
+      ])
+        .then((values) => {
+          this._receiver = values[0];
+          this._sender = values[1];
 
-        // Send a HELLO message to teh server
-        const message = new Message({
-          clientId: this.id,
-          type: Message.types.HELLO,
-        });
-        this._send(message);
+          // Let's introduce the client to teh servers
+          const message = new Message({
+            clientId: this.id,
+            type: Message.types.HELLO,
+          });
+          this._send(message);
 
-        resolve(this);
-      });
-
-      this.ws.on('close', () => {
-        reject();
-        this.isConnected = false;
-        logger.silly('Client %s disconnected from teh server', this.id);
-      });
-
-      this.ws.on('message', (data) => {
-        logger.silly('Client %s received a message from the receiver: %s', this.id, data);
-        this.onMessageListener(data);
-      });
+          resolve(this);
+        })
+        .catch(reject);
     });
   }
 
   _send(message) {
-    if (!this.isConnected) {
-      logger.warn('Error! Client $s not connected to teh server', this.id);
+    if (!this._receiver.isConnected) {
+      logger.warn('Error! Client %s not connected to the server', this.id);
       return;
     }
 
-    this.ws.send(message.toString(), (err) => {
+    this._receiver.send(message.toString(), (err) => {
       if (!!err) {
         logger.error(err);
       }
@@ -67,13 +60,12 @@ module.exports = class Client {
   }
 
   setOnMesageListener(fn) {
-    this.onMessageListener = fn;
+    this._sender.onMessageListener = fn;
   }
 
   close() {
-    this.ws.close();
-    this.isConnected = false;
-    logger.silly('Client %s closed the connection');
+    this._sender.close();
+    this._receiver.close();
   }
 
 };

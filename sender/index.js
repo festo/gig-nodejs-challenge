@@ -7,7 +7,7 @@ const CHANNEL = 'challenge';
 const Message = require('../common/Message');
 const MessageQueue = require('../common/MessageQueue');
 
-const wss = new WebSocketServer({ port: 3000 });
+const wss = new WebSocketServer({ port: 3001 });
 
 let pServer = new Promise((resolve) => {
   wss.on('listening', () => {
@@ -23,6 +23,8 @@ let pMQ = new Promise((resolve, reject) => {
 Promise.all([pServer, pMQ]).then((values) => {
   const mq = values[1];
 
+  mq.subscribe(CHANNEL);
+
   wss.on('connection', (ws) => {
     logger.silly('New client connected');
     let clientId = null;
@@ -35,11 +37,6 @@ Promise.all([pServer, pMQ]).then((values) => {
         logger.silly('Client identify themselves as %s', clientId);
       }
 
-      // Distribute TEXT messages only
-      if(oMessage.type === Message.types.TEXT) {
-        mq.publish(CHANNEL, oMessage.toString());
-      }
-
       const ackMessage = new Message({
         id: oMessage.id,
         type: Message.types.ACK,
@@ -48,6 +45,11 @@ Promise.all([pServer, pMQ]).then((values) => {
 
       logger.silly(message);
     });
+  });
+
+  mq.on('message', (channel, message) => {
+    logger.silly(message);
+    wss.broadcast(message);
   });
 });
 
