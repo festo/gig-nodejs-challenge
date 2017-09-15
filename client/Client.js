@@ -24,13 +24,12 @@ module.exports = class Client {
         .then(([receiver, sender]) => {
           this._receiver = receiver;
           this._sender = sender;
-
           // Say hello to receiver
           const receiverHelloMessage = new Message({
             clientId: this.id,
             type: Message.types.HELLO,
           });
-          this._receiver.send(receiverHelloMessage.toString());
+          this._receiver.send(receiverHelloMessage.toProto());
           this._messages[receiverHelloMessage.id] = receiverHelloMessage;
 
           // Say hello to sender
@@ -38,7 +37,7 @@ module.exports = class Client {
             clientId: this.id,
             type: Message.types.HELLO,
           });
-          this._sender.send(senderHelloMessage.toString());
+          this._sender.send(senderHelloMessage.toProto());
           this._messages[senderHelloMessage.id] = senderHelloMessage;
 
           // Catch messages from the servers
@@ -52,11 +51,11 @@ module.exports = class Client {
 
   _send(message) {
     if (!this._receiver.isConnected) {
-      logger.warn('Error! Client %s not connected to the server', this.id);
+      logger.error('Error! Client %s not connected to the server', this.id);
       return;
     }
 
-    this._receiver.send(message.toString(), (err) => {
+    this._receiver.send(message.toProto(), (err) => {
       if (!!err) {
         logger.error(err);
       }

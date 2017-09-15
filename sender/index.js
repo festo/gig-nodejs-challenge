@@ -30,26 +30,31 @@ Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
     ws.clientId = null;
 
     ws.on('message', (message) => {
-      let oMessage = Message.parse(message);
-
-      if(oMessage.type === Message.types.HELLO) {
-        ws.clientId = oMessage.clientId;
+      try {
+        message = Message.parse(message);
+      } catch (error) {
+        logger.error(error);
+        return;
+      }
+      if(message.type === Message.types.HELLO) {
+        ws.clientId = message.clientId;
         logger.silly('Client identify themselves as %s', ws.clientId);
       }
 
       // The message is processed, send back an ACK
       const ackMessage = new Message({
-        id: oMessage.id,
+        id: message.id,
         type: Message.types.ACK,
       });
-      ws.send(ackMessage.toString());
+      ws.send(ackMessage.toProto());
     });
   });
 
   // receive message from the queue and send it to teh connected clients
   messageQueue.on('message', (channel, message) => {
     logger.silly('Received a message from %s channel', channel);
-    server.broadcast(message);
+    message = new Message(message = JSON.parse(message))
+    server.broadcast(message.toProto());
   });
 });
 

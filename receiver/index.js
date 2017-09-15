@@ -30,7 +30,12 @@ Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
     ws.clientId = null;
 
     ws.on('message', (message) => {
-      message = Message.parse(message);
+      try {
+        message = Message.parse(message);
+      } catch (error) {
+        logger.error(error);
+        return;
+      }
 
       if (message.type === Message.types.HELLO) {
         ws.clientId = message.clientId;
@@ -47,7 +52,7 @@ Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
         id: message.id,
         type: Message.types.ACK,
       });
-      ws.send(ackMessage.toString());
+      ws.send(ackMessage.toProto());
     });
   });
 });
