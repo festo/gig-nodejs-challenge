@@ -36,6 +36,7 @@ Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
         logger.error(error);
         return;
       }
+
       if(message.type === Message.types.HELLO) {
         ws.clientId = message.clientId;
         logger.silly('Client identify themselves as %s', ws.clientId);
@@ -53,8 +54,7 @@ Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
   // receive message from the queue and send it to teh connected clients
   messageQueue.on('message', (channel, message) => {
     logger.silly('Received a message from %s channel', channel);
-    message = new Message(message = JSON.parse(message))
-    server.broadcast(message.toProto());
+    server.broadcast(Buffer.from(message, 'base64'));
   });
 });
 

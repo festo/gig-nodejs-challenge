@@ -24,6 +24,7 @@ module.exports = class Client {
         .then(([receiver, sender]) => {
           this._receiver = receiver;
           this._sender = sender;
+
           // Say hello to receiver
           const receiverHelloMessage = new Message({
             clientId: this.id,
@@ -85,11 +86,11 @@ module.exports = class Client {
 
   _messageHandler(message) {
     message = Message.parse(message);
+    let localMessage = this._messages[message.id];
 
     switch (message.type) {
       case Message.types.TEXT:
         if (message.clientId === this.id) {
-          let localMessage = this._messages[message.id];
           if (localMessage) {
             localMessage.setStatus(Message.statuses.DELIVERED);
           }
@@ -99,7 +100,6 @@ module.exports = class Client {
         break;
 
       case Message.types.ACK:
-        let localMessage = this._messages[message.id];
         if (localMessage) {
           localMessage.setStatus(Message.statuses.PROCESSED);
         }

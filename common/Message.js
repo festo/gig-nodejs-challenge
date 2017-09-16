@@ -15,16 +15,11 @@ module.exports = class Message {
     this.message = options.message;
     this.createdAt = new Date();
     this.status = 'CREATED';
+    this._buffer = null;
   }
 
   toString()  {
-    return JSON.stringify({
-      id: this.id,
-      type: this.type,
-      clientId: this.clientId,
-      message: this.message,
-      createdAt: this.createdAt,
-    });
+    return this._buffer.toString('base64');
   }
 
   toProto() {
@@ -43,9 +38,9 @@ module.exports = class Message {
     }
 
     const proto = MessageProto.create(protoObject);
-    const buffer = MessageProto.encode(proto).finish();
+    this._buffer = MessageProto.encode(proto).finish();
 
-    return buffer;
+    return this._buffer;
   }
 
   setStatus(status) {
@@ -53,14 +48,16 @@ module.exports = class Message {
   }
 
   static parse(message) {
-    message = Buffer.from(message);
-    const proto = MessageProto.decode(message);
+    const buffer = Buffer.from(message);
+    const proto = MessageProto.decode(buffer);
     const protoObject = MessageProto.toObject(proto, {
       enums: String,
     });
 
     // Create a new Message instance
-    return new this(protoObject);
+    message = new this(protoObject);
+    message._buffer = buffer;
+    return message;
   }
 
   static get types() {
