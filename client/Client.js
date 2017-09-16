@@ -30,7 +30,7 @@ module.exports = class Client {
             clientId: this.id,
             type: Message.types.HELLO,
           });
-          this._receiver.send(receiverHelloMessage.toString());
+          this._receiver.send(receiverHelloMessage.toProto());
           this._messages[receiverHelloMessage.id] = receiverHelloMessage;
 
           // Say hello to sender
@@ -38,7 +38,7 @@ module.exports = class Client {
             clientId: this.id,
             type: Message.types.HELLO,
           });
-          this._sender.send(senderHelloMessage.toString());
+          this._sender.send(senderHelloMessage.toProto());
           this._messages[senderHelloMessage.id] = senderHelloMessage;
 
           // Catch messages from the servers
@@ -52,11 +52,11 @@ module.exports = class Client {
 
   _send(message) {
     if (!this._receiver.isConnected) {
-      logger.warn('Error! Client %s not connected to the server', this.id);
+      logger.error('Error! Client %s not connected to the server', this.id);
       return;
     }
 
-    this._receiver.send(message.toString(), (err) => {
+    this._receiver.send(message.toProto(), (err) => {
       if (!!err) {
         logger.error(err);
       }
@@ -86,11 +86,11 @@ module.exports = class Client {
 
   _messageHandler(message) {
     message = Message.parse(message);
+    let localMessage = this._messages[message.id];
 
     switch (message.type) {
       case Message.types.TEXT:
         if (message.clientId === this.id) {
-          let localMessage = this._messages[message.id];
           if (localMessage) {
             localMessage.setStatus(Message.statuses.DELIVERED);
           }
@@ -100,7 +100,6 @@ module.exports = class Client {
         break;
 
       case Message.types.ACK:
-        let localMessage = this._messages[message.id];
         if (localMessage) {
           localMessage.setStatus(Message.statuses.PROCESSED);
         }

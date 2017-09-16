@@ -1,7 +1,12 @@
 'use strict';
 
 const uuid = require('uuid');
-const logger = require('../common/logger');
+const protobuf = require('protobufjs');
+
+const messageProto = './common/Message.proto';
+const protoRoot = protobuf.loadSync(messageProto);
+const MessageProto = protoRoot.lookupType('challenge.gig.Message');
+const MessageType = protoRoot.lookupEnum('challenge.gig.MessageType');
 
 module.exports = class Message {
   constructor(options) {
@@ -9,18 +14,34 @@ module.exports = class Message {
     this.type = options.type;
     this.clientId = options.clientId;
     this.message = options.message;
-    this.createdAt = Date.now();
+    this.createdAt = new Date();
     this.status = 'CREATED';
+    this._buffer = null;
   }
 
   toString()  {
-    return JSON.stringify({
+    return this._buffer.toString('base64');
+  }
+
+  toProto() {
+    const protoObject = {
       id: this.id,
-      type: this.type,
+      type: MessageType.values[this.type],
       clientId: this.clientId,
       message: this.message,
-      createdAt: this.createdAt,
-    });
+      createdAt: this.createdAt.toISOString(),
+    };
+
+    // Verify the message
+    const protoError = MessageProto.verify(protoObject);
+    if (protoError) {
+      throw Error(protoError);
+    }
+
+    const proto = MessageProto.create(protoObject);
+    this._buffer = MessageProto.encode(proto).finish();
+
+    return this._buffer;
   }
 
   setStatus(status) {
@@ -28,13 +49,16 @@ module.exports = class Message {
   }
 
   static parse(message) {
-    let oMessage = {};
-    try {
-      oMessage = new this(JSON.parse(message));
-    } catch(e) {
-      logger.error(e);
-    }
-    return oMessage;
+    const buffer = Buffer.from(message);
+    const proto = MessageProto.decode(buffer);
+    const protoObject = MessageProto.toObject(proto, {
+      enums: String,
+    });
+
+    // Create a new Message instance
+    message = new this(protoObject);
+    message._buffer = buffer;
+    return message;
   }
 
   static get types() {

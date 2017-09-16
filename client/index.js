@@ -14,7 +14,7 @@ Promise.all([
     client1.send('Hello');
 
     client2.setOnMessageListener((message) => {
-      logger.verbose('Message received: %s ', message);
+      logger.verbose('Message received: %s from %s ', message.message, message.clientId);
     });
   })
   .catch((err) => {
