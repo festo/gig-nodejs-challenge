@@ -10,8 +10,7 @@ enum MessageType {
 
 message Message {
     string id = 1;
-//    MessageType type = 2;
-    string type = 2;
+    MessageType type = 2;
     string clientId = 3;
     string message = 4;
     string createdAt = 5;

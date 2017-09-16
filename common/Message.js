@@ -6,6 +6,7 @@ const protobuf = require('protobufjs');
 const messageProto = './common/Message.proto';
 const protoRoot = protobuf.loadSync(messageProto);
 const MessageProto = protoRoot.lookupType('challenge.gig.Message');
+const MessageType = protoRoot.lookupEnum('challenge.gig.MessageType');
 
 module.exports = class Message {
   constructor(options) {
@@ -25,7 +26,7 @@ module.exports = class Message {
   toProto() {
     const protoObject = {
       id: this.id,
-      type: this.type,
+      type: MessageType.values[this.type],
       clientId: this.clientId,
       message: this.message,
       createdAt: this.createdAt.toISOString(),
