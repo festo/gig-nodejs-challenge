@@ -1,0 +1,28 @@
+version: '3'
+services:
+  receiver:
+    build:
+      context: .
+      dockerfile: Dockerfile-receiver
+    ports:
+      - "3000:3000"
+    links:
+      - message_queue
+    environment:
+      - MESSAGE_QUEUE_URL=redis://message_queue:6379
+  sender:
+    build:
+      context: .
+      dockerfile: Dockerfile-sender
+    ports:
+      - "3001:3001"
+    links:
+      - message_queue
+    environment:
+      - MESSAGE_QUEUE_URL=redis://message_queue:6379
+  message_queue:
+    container_name: "message_queue"
+    image: redis:3.2.1
+    restart: always
+    expose:
+      - "6379"
