@@ -63,5 +63,14 @@ Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
       ws.send(ackMessage.toProto());
     });
   });
+
+  server.on('error', (error) => {
+    logger.error(error);
+  });
+
+  serverEvents.on('close', () => {
+    logger.silly('Server is shutting down');
+    server.close();
+  });
 });
 

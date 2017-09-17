@@ -8,11 +8,17 @@ const config = require('../common/config');
 const Message = require('../common/Message');
 const MessageQueue = require('../common/MessageQueue');
 
+let serverEvents;
+
 describe('Receiver', () => {
 
   before((done) => {
-    const serverEvents = require('../receiver/');
+    serverEvents = require('../receiver/');
     serverEvents.on('listening', done);
+  });
+
+  after(() => {
+    serverEvents.emit('close');
   });
 
   it('Allows client to connect', (done) => {

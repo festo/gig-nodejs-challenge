@@ -61,6 +61,15 @@ Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
     });
   });
 
+  server.on('error', (error) => {
+    logger.error(error);
+  });
+
+  serverEvents.on('close', () => {
+    logger.silly('Server is shutting down');
+    server.close();
+  });
+
   // receive message from the queue and send it to teh connected clients
   messageQueue.on('message', (channel, message) => {
     logger.silly('Received a message from %s channel', channel);
