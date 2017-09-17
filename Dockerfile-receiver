@@ -1,0 +1,9 @@
+FROM node:6.9.1
+
+RUN mkdir /src
+COPY . /src
+RUN apt-get update
+RUN npm install pm2 -g
+
+CMD cd /src && npm install &&\
+    pm2 start receiver/index.js && pm2 logs
