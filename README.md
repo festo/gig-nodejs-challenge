@@ -7,7 +7,8 @@ This is my implementation for the GiG challenge, it contains
 - a receiver server that receives the messages from the client,
 - a sender server that broadcasts the messages to the connected clients,
 - a message queue adapter that currently uses a redis pub/sub
-- tests with Mocha
+- tests with Mocha,
+- a docker compose file for easy setup.
 
 ### Installation guideline
 
@@ -22,4 +23,18 @@ This is my implementation for the GiG challenge, it contains
   `node receiver`
 * Start the sender
  `node sender`
+ 
+### Docker
+The docker compose file is ready to use, you can set up the services with two commands:
+
+```
+docker-compose bild
+docker-compose up
+```
   
+### Requirements
+The project is tested and implemented with
+- Node v6.9.1
+- NPM 4.5.0
+- Docker Compose 1.14.0
+- Redis 3.2.1  
