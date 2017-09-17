@@ -32,7 +32,7 @@ describe('Receiver', () => {
     }).catch(done);
   });
 
-  it('Receives messages from client', (done) => {
+  it('Receives HELLO messages from client', (done) => {
     let client = new WebSocket(config.receiver.url);
     client.on('open', () => {
       let message = new Message({
@@ -49,7 +49,6 @@ describe('Receiver', () => {
       let localMessage = new Message({
         clientId: uuid.v4(),
         type: Message.types.HELLO,
-        message: 'Test message for ACK',
       });
 
       client.on('message', (message) => {
