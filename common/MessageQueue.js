@@ -25,8 +25,13 @@ module.exports = class MessageQueue {
   }
 
   subscribe(channel) {
-    logger.silly('Subscribe for %s channel', channel);
-    this.sub.subscribe(channel);
+    return new Promise((resolve) => {
+      this.sub.subscribe(channel);
+      this.sub.on('subscribe', (channel) => {
+        logger.silly('Subscribe for %s channel', channel);
+        resolve(this);
+      });
+    });
   }
 
   on(eventType, fn) {

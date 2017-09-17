@@ -7,6 +7,10 @@ const config = require('../common/config');
 const Message = require('../common/Message');
 const MessageQueue = require('../common/MessageQueue');
 
+const EventEmitter = require('events');
+const serverEvents = new EventEmitter();
+module.exports = serverEvents;
+
 // Create WebSocket server
 let pServer = new Promise((resolve) => {
   const wss = new WebSocketServer({
@@ -25,11 +29,15 @@ let pMQ = new Promise((resolve, reject) => {
 });
 
 Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
+
+  serverEvents.emit('listening');
+
   server.on('connection', (ws) => {
     logger.silly('New client connected');
     ws.clientId = null;
 
     ws.on('message', (message) => {
+      logger.silly('New message received from client');
       try {
         message = Message.parse(message);
       } catch (error) {
