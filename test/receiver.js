@@ -63,48 +63,48 @@ describe('Receiver', () => {
     });
   });
 
-  it.skip('Saves message to the MessageQueue', (done) => {
-    const client = new WebSocket(config.receiver.url);
-
-    new MessageQueue().then((messageQueue) => {
-      messageQueue.subscribe(config.channel);
-
-      const pMessageQueue = new Promise((resolve) => {
-        messageQueue.on('message', (channel, message) => {
-          message = Message.parse(Buffer.from(message, 'base64'));
-          console.log('Received message');
-          resolve(message);
-        });
-      });
-
-      const pClient = new Promise((resolve) => {
-        client.on('open', () => {
-          let localMessage = new Message({
-            clientId: uuid.v4(),
-            type: Message.types.TEXT,
-            message: 'Test message for MessageQueue',
+  it('Saves message to the MessageQueue', (done) => {
+    new MessageQueue()
+      .then((messageQueue) => {
+        return messageQueue.subscribe(config.channel);
+      })
+      .then((messageQueue) => {
+        const pMessageQueue = new Promise((resolve) => {
+          messageQueue.on('message', (channel, message) => {
+            message = Message.parse(Buffer.from(message, 'base64'));
+            resolve(message);
           });
-
-          client.on('message', (message) => {
-            message = Message.parse(message);
-            if (localMessage.id === message.id) {
-              resolve(message);
-            }
-          });
-
-          client.send(localMessage.toProto());
         });
-      });
 
-      Promise.all([
-        pClient,
-        pMessageQueue,
-      ]).then(([sentMessage, receivedMessage]) => {
-        if (sentMessage.id === receivedMessage.id) {
-          done();
-        }
-      });
-    }).catch(done);
+        const pClient = new Promise((resolve) => {
+          const client = new WebSocket(config.receiver.url);
+          client.on('open', () => {
+            let localMessage = new Message({
+              clientId: uuid.v4(),
+              type: Message.types.TEXT,
+              message: 'Test message for MessageQueue',
+            });
+
+            client.on('message', (message) => {
+              message = Message.parse(message);
+              if (localMessage.id === message.id) {
+                resolve(message);
+              }
+            });
+
+            client.send(localMessage.toProto());
+          });
+        });
+
+        Promise.all([
+          pClient,
+          pMessageQueue,
+        ]).then(([sentMessage, receivedMessage]) => {
+          if (sentMessage.id === receivedMessage.id) {
+            done();
+          }
+        });
+      }).catch(done);
 
   });
 });
