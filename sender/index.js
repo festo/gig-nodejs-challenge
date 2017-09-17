@@ -21,16 +21,19 @@ let pServer = new Promise((resolve) => {
   });
 });
 
-// Connect to the Message Queue
+// Connect to the Message Queue and subscribe for channel
 let pMQ = new Promise((resolve, reject) => {
-  new MessageQueue().then(resolve).catch(reject);
+  new MessageQueue()
+    .then((messageQueue) => {
+      return messageQueue.subscribe(config.channel);
+    })
+    .then(resolve)
+    .catch(reject);
 });
 
 Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
 
   serverEvents.emit('listening');
-
-  messageQueue.subscribe(config.channel);
 
   server.on('connection', (ws) => {
     logger.silly('New client connected');
@@ -44,7 +47,7 @@ Promise.all([pServer, pMQ]).then(([server, messageQueue]) => {
         return;
       }
 
-      if(message.type === Message.types.HELLO) {
+      if (message.type === Message.types.HELLO) {
         ws.clientId = message.clientId;
         logger.silly('Client identify themselves as %s', ws.clientId);
       }
