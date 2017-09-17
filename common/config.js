@@ -2,18 +2,18 @@
 
 module.exports = {
   log: {
-    level: 'silly',
+    level: process.env.LOG_LEVEL || 'silly',
   },
   receiver: {
-    url: 'ws://localhost:3000',
+    url: process.env.RECEIVER_URL || 'ws://localhost:3000',
     port: 3000,
   },
   sender: {
-    url: 'ws://localhost:3001',
+    url: process.env.SENDER_URL || 'ws://localhost:3001',
     port: 3001,
   },
   messageQueue: {
-    url: 'redis://localhost:6379'
+    url: process.env.MESSAGE_QUEUE_URL || 'redis://localhost:6379',
   },
   channel: 'challenge',
 };

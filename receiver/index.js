@@ -1,6 +1,8 @@
 'use strict';
 
 const WebSocketServer = require('uws').Server;
+const dotenv = require('dotenv').load({path: '.env'});
+
 const logger = require('../common/logger.js');
 const config = require('../common/config');
 
